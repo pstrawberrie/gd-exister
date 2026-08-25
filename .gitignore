@@ -1,6 +1,16 @@
 # Godot 4+ specific ignores
 .godot/
-/android/
 
-# Mac
+# Godot generated files
+*.translation
+
+# Mono/C# generated files
+.mono/
+data_*/
+mono_crash.*.json
+
+# OS/editor junk
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/
