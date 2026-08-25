@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://experiments/presence_001/presence_001.gd" id="1_x4n2u"]
+[ext_resource type="Script" path="res://exister/entities/wisps/wisp.gd" id="2_j3p8r"]
+
+[node name="Presence001" type="Node2D"]
+script = ExtResource("1_x4n2u")
+
+[node name="Wisp" type="Node2D" parent="."]
+position = Vector2(640, 360)
+script = ExtResource("2_j3p8r")

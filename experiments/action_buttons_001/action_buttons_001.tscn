@@ -1,0 +1,18 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://experiments/action_buttons_001/action_buttons_001.gd" id="1_scene"]
+[ext_resource type="Script" path="res://exister/entities/wisps/wisp.gd" id="2_wisp"]
+[ext_resource type="Script" path="res://exister/ui/action_space.gd" id="3_action"]
+
+[node name="ActionButtons001" type="Node2D"]
+script = ExtResource("1_scene")
+
+[node name="EnterExister" type="Node2D" parent="."]
+script = ExtResource("3_action")
+button_size = Vector2(300, 116)
+label_text = "Enter"
+particle_count = 54
+
+[node name="Wisp" type="Node2D" parent="."]
+position = Vector2(640, 500)
+script = ExtResource("2_wisp")
