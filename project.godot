@@ -10,21 +10,19 @@ config_version=5
 
 [application]
 
-config/name="Exister Laboratory"
+config/name="Exister 3D Laboratory"
+run/main_scene="res://experiments/world_001/world_001.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
-config/icon="res://icon.svg"
 
 [display]
 
+window/size/viewport_width=1280
+window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
-[physics]
-
-3d/physics_engine="Jolt Physics"
-
 [rendering]
 
-rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
