@@ -1,47 +1,59 @@
-# Exister 3D Laboratory
+# LittleJS + Vite
 
-This repository is the clean 3D restart of the Exister game laboratory.
+This template provides a minimal setup to get LittleJS working in Vite.
 
-The previous 2D experiments did their job: they established important visual and interaction ideas. Their implementation is intentionally not carried forward. The 3D world, its wisps, and its systems will be rediscovered for 3D rather than translated mechanically.
+## Use as a template
 
-## Direction
+Spin up a fresh project from this template with [degit](https://github.com/Rich-Harris/degit):
 
-- Godot 4 / GDScript
-- Browser-first
-- Full 3D
-- Stylized geometry + atmosphere rather than photorealism
-- No dependency on external art assets or textures as a requirement
-- Hand-authored/static overworld geography
-- Procedural generation used as an **authoring tool**, not as a randomized overworld seed
-- Hardcore-mode procedural generation can be explored separately later
-- Multiplayer target: intimate persistent world, roughly 1–10 players
-
-## Repository shape
-
-```text
-experiments/
-  world_001/        First 3D world-generation experiment.
-
-exister/
-  world/
-    terrain/        Reusable terrain-generation/world-shaping systems.
-    atmosphere/     Reusable sky, lighting, weather, and ambience systems.
-  entities/
-    wisps/          Future 3D wisp implementation.
+```
+npx degit KilledByAPixel/LittleJS/examples/vite-starter my-game
+cd my-game
+npm install
+npm run dev
 ```
 
-Keep experiments self-contained until a system earns a reusable home under `exister/`.
+Requires Node 20.19+ or 22.12+ (Vite 7's requirement; the LittleJS engine itself runs on Node 18+).
 
-## Terrain philosophy
+## Getting started
 
-The overworld itself is authored and familiar. Noise/procedural systems are allowed to help us **find and shape** landforms, but once geography feels right it becomes canon rather than changing between sessions.
+```
+npm install
+npm run dev
+```
 
-`World 001` therefore uses a fixed noise seed and tunable terrain parameters. It is a landscape sketching tool, not a runtime random-world generator.
+## Vite commands
 
-## Browser rendering
+```
+npm run dev       # dev server with hot reload
+npm run build     # build to dist/
+npm run preview   # preview the production build
+```
 
-The project intentionally uses Godot's **GL Compatibility** renderer. Web exports use WebGL 2 and this keeps the visual target aligned with the browser from the beginning.
+See the [Vite docs](https://vite.dev) for more.
 
-## Terrain3D
+## Assets
 
-Terrain3D is intentionally not installed as a runtime dependency yet. We may evaluate it later as an editor-side sculpting/baking tool once the native prototype teaches us what kind of terrain workflow Exister actually needs.
+Files in `public/` are served from the site root in dev and copied as-is to `dist/` on build. The tilesheet lives there, which is why `engineInit(..., ['tiles.png'])` works in both dev and the built output.
+
+For assets you want Vite to hash and bundle (the usual case for large projects), import them from `src/` instead:
+
+```js
+import tilesURL from './tiles.png';
+```
+
+## Deploying
+
+The included `vite.config.js` sets `base: './'`, which makes the built site work from any subdirectory — including GitHub Pages project sites and itch.io uploads. The `public/.nojekyll` file ships in the build so GitHub Pages won't ignore Vite's underscore-prefixed chunk files.
+
+To deploy:
+
+```
+npm run build
+```
+
+then upload the contents of `dist/` (or zip them for itch.io).
+
+## LittleJS
+
+[Read the LittleJS docs to learn more](https://github.com/KilledByAPixel/LittleJS).
