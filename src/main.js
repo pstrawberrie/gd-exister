@@ -49,6 +49,8 @@ function gameUpdatePost() {
 function gameRender() {
     if (activeParticleId === 'heaven')
         drawHeaven();
+    else if (activeParticleId === 'bloodtide')
+        drawBloodtide();
 }
 
 function gameRenderPost() {
@@ -64,6 +66,64 @@ function rebuildParticleScene() {
         return;
 
     particleEmitters = createParticlePrototype(activeParticleId);
+}
+
+
+function drawBloodtide() {
+    const surge = sceneTime;
+    const seaLevel = 0.35;
+    const bottomY = -8.8;
+    const leftX = -10;
+    const rightX = 10;
+    const step = 0.12;
+
+    // Faint upper haze so the falling white dust feels trapped in a bad place.
+    drawCircle(vec2(0, 3.4), 5.6, rgb(0.26, 0.02, 0.03, 0.018));
+    drawCircle(vec2(0, -0.6), 7.8, rgb(0.34, 0.03, 0.04, 0.024));
+
+    // Chaotic wave surface built from several frequencies so the top edge feels
+    // nervous and unstable rather than like a gentle sine wave.
+    const columns = [];
+    for (let x = leftX; x <= rightX; x += step) {
+        const waveY = seaLevel
+            + Math.sin(x * 0.9 + surge * 1.9) * 0.28
+            + Math.sin(x * 1.85 - surge * 2.8) * 0.18
+            + Math.sin(x * 3.6 + surge * 4.6) * 0.08
+            + Math.sin(x * 6.8 - surge * 7.2) * 0.035;
+        columns.push({ x, waveY });
+
+        // Semi-transparent body lets some white particles remain visible below.
+        drawLine(vec2(x, bottomY), vec2(x, waveY), 0.11, rgb(0.54, 0.02, 0.05, 0.36));
+        drawLine(vec2(x, bottomY), vec2(x, waveY - 0.05), 0.065, rgb(0.72, 0.04, 0.08, 0.12));
+    }
+
+    // Glowing red crest pushed into a near-molten metallic specular look.
+    for (let i = 1; i < columns.length; i++) {
+        const a = columns[i - 1];
+        const b = columns[i];
+        const crestPulse = 0.82 + Math.sin(surge * 8.5 + a.x * 2.4) * 0.18;
+
+        // Large red bloom hugging the liquid edge.
+        drawLine(vec2(a.x, a.waveY), vec2(b.x, b.waveY), 0.34, rgb(1, 0.035, 0.07, 0.2 * crestPulse));
+        drawLine(vec2(a.x, a.waveY), vec2(b.x, b.waveY), 0.24, rgb(1, 0.06, 0.08, 0.3 * crestPulse));
+        drawLine(vec2(a.x, a.waveY), vec2(b.x, b.waveY), 0.15, rgb(1, 0.13, 0.12, 0.5 * crestPulse));
+
+        // Hot metal-like crest core.
+        drawLine(vec2(a.x, a.waveY + 0.006), vec2(b.x, b.waveY + 0.006), 0.085, rgb(1, 0.28, 0.22, 0.82));
+        drawLine(vec2(a.x, a.waveY + 0.014), vec2(b.x, b.waveY + 0.014), 0.038, rgb(1, 0.66, 0.5, 0.98));
+        drawLine(vec2(a.x, a.waveY + 0.02), vec2(b.x, b.waveY + 0.02), 0.018, rgb(1, 0.92, 0.78, 0.94));
+
+        // Thin specular streaks offset above the crest make the shine appear to
+        // kick outward like reflected light on polished metal.
+        if (i % 3 === 0) {
+            const flare = 0.055 + (Math.sin(a.x * 5.7 + surge * 10.5) + 1) * 0.035;
+            drawLine(vec2(a.x, a.waveY + 0.055), vec2(b.x, b.waveY + 0.055), 0.012, rgb(1, 0.52, 0.4, flare));
+            drawLine(vec2(a.x, a.waveY + 0.09), vec2(b.x, b.waveY + 0.09), 0.007, rgb(1, 0.35, 0.3, flare * 0.6));
+        }
+    }
+
+    // Darker underbody to keep the sea heavy and ominous.
+    drawCircle(vec2(0, -5.8), 7.2, rgb(0.16, 0.005, 0.015, 0.1));
 }
 
 function drawHeaven() {

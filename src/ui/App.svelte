@@ -3,6 +3,8 @@
     import { playSoundPrototype, soundPrototypes } from '../audio/audioPrototypes.js';
     import { activeParticlePrototype, lastPlayedSoundPrototype } from './labState.js';
 
+    $: activeParticle = particlePrototypes.find((prototype) => prototype.id === $activeParticlePrototype) || particlePrototypes[0];
+
     function selectParticle(id) {
         activeParticlePrototype.set(id);
     }
@@ -69,8 +71,8 @@
     </aside>
 
     <div class="scene-caption" aria-live="polite">
-        <span class="scene-caption__number">Particle 001</span>
-        <strong>Heaven</strong>
-        <span>light from above · dust in suspension</span>
+        <span class="scene-caption__number">{activeParticle.captionNumber}</span>
+        <strong>{activeParticle.captionTitle}</strong>
+        <span>{activeParticle.captionSubtitle}</span>
     </div>
 </div>
