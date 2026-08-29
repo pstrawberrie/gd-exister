@@ -1,15 +1,18 @@
 {
-  "name": "littlejs-vite-example",
+  "name": "gd-exister",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "start": "npm run dev",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
-    "vite": "^7.3.1"
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "svelte": "^5.56.10",
+    "vite": "^8.2.2"
   },
   "dependencies": {
     "littlejsengine": "^1.18.0"

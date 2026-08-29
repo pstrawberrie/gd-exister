@@ -3,16 +3,15 @@ import {
     drawCircle,
     drawLine,
     drawRect,
+    drawTextScreen,
+    keyWasPressed,
+    mainCanvasSize,
     rgb,
     setCameraPos,
     setCameraScale,
     setCanvasClearColor,
     vec2,
 } from 'littlejsengine';
-import { mount } from 'svelte';
-import App from './ui/App.svelte';
-import { orbitalState, orbitStyles } from './ui/gameState.js';
-import './ui/styles.css';
 
 const WORLD_LIMIT = 9;
 const CAMERA_SCALE = 72;
@@ -21,8 +20,54 @@ const SHADOW_SHIFT = vec2(0.18, -0.22);
 
 let sceneTime = 0;
 
-let orbitals = {};
-orbitalState.subscribe((value) => orbitals = value);
+const orbitStyles = [
+    {
+        name: 'SEED',
+        glow: [0.98, 0.86, 0.46],
+        body: [1, 0.94, 0.72],
+        core: [1, 1, 0.98],
+        kind: 'seed',
+    },
+    {
+        name: 'PEARL',
+        glow: [0.94, 0.84, 0.92],
+        body: [1, 0.95, 0.98],
+        core: [1, 1, 1],
+        kind: 'pearl',
+    },
+    {
+        name: 'EMBER',
+        glow: [0.98, 0.58, 0.22],
+        body: [1, 0.78, 0.46],
+        core: [1, 0.98, 0.9],
+        kind: 'ember',
+    },
+    {
+        name: 'SHARD',
+        glow: [0.52, 0.78, 0.98],
+        body: [0.84, 0.95, 1],
+        core: [1, 1, 1],
+        kind: 'shard',
+    },
+    {
+        name: 'SHADOW',
+        glow: [0.66, 0.7, 0.84],
+        body: [0.84, 0.88, 0.98],
+        core: [0.08, 0.08, 0.12],
+        kind: 'shadow',
+    },
+];
+
+const orbitalState = {
+    count: 3,
+    size: 0.12,
+    speed: 1.1,
+    orientationDeg: 18,
+    radius: 0.88,
+    flatten: 0.42,
+    wobble: 0.06,
+    styleIndex: 0,
+};
 
 const focusWisp = {
     x: 0,
@@ -53,6 +98,32 @@ function gameInit() {
 function gameUpdate() {
     sceneTime += 1 / 60;
 
+    if (keyWasPressed('Digit1')) orbitalState.styleIndex = 0;
+    if (keyWasPressed('Digit2')) orbitalState.styleIndex = 1;
+    if (keyWasPressed('Digit3')) orbitalState.styleIndex = 2;
+    if (keyWasPressed('Digit4')) orbitalState.styleIndex = 3;
+    if (keyWasPressed('Digit5')) orbitalState.styleIndex = 4;
+
+    if (keyWasPressed('KeyQ')) orbitalState.count = clamp(orbitalState.count + 1, 0, 8);
+    if (keyWasPressed('KeyA')) orbitalState.count = clamp(orbitalState.count - 1, 0, 8);
+
+    if (keyWasPressed('KeyW')) orbitalState.size = clamp(orbitalState.size + 0.01, 0.04, 0.26);
+    if (keyWasPressed('KeyS')) orbitalState.size = clamp(orbitalState.size - 0.01, 0.04, 0.26);
+
+    if (keyWasPressed('KeyE')) orbitalState.speed = clamp(orbitalState.speed + 0.12, 0, 3);
+    if (keyWasPressed('KeyD')) orbitalState.speed = clamp(orbitalState.speed - 0.12, 0, 3);
+
+    if (keyWasPressed('KeyR')) orbitalState.orientationDeg = wrapDeg(orbitalState.orientationDeg + 15);
+    if (keyWasPressed('KeyF')) orbitalState.orientationDeg = wrapDeg(orbitalState.orientationDeg - 15);
+
+    if (keyWasPressed('KeyT')) orbitalState.radius = clamp(orbitalState.radius + 0.06, 0.24, 1.6);
+    if (keyWasPressed('KeyG')) orbitalState.radius = clamp(orbitalState.radius - 0.06, 0.24, 1.6);
+
+    if (keyWasPressed('KeyY')) orbitalState.flatten = clamp(orbitalState.flatten + 0.05, 0.12, 1.0);
+    if (keyWasPressed('KeyH')) orbitalState.flatten = clamp(orbitalState.flatten - 0.05, 0.12, 1.0);
+
+    if (keyWasPressed('KeyU')) orbitalState.wobble = clamp(orbitalState.wobble + 0.01, 0, 0.2);
+    if (keyWasPressed('KeyJ')) orbitalState.wobble = clamp(orbitalState.wobble - 0.01, 0, 0.2);
 }
 
 function gameUpdatePost() {
@@ -71,7 +142,33 @@ function gameRender() {
 }
 
 function gameRenderPost() {
-    // Static interface is rendered by Svelte/HTML above the LittleJS canvases.
+    const style = orbitStyles[orbitalState.styleIndex];
+    const panelX = 34;
+    const panelY = 34;
+    const line = 18;
+
+    drawTextScreen('ORBITALS 001', vec2(mainCanvasSize.x / 2, 34), 24, rgb(0.96, 0.92, 0.78));
+    drawTextScreen('Customization-view prototype · zoomed hero wisp + famous-place background (TBD)', vec2(mainCanvasSize.x / 2, 58), 14, rgb(0.66, 0.64, 0.6));
+
+    drawTextScreen('STYLE', vec2(panelX, panelY), 14, rgb(0.9, 0.82, 0.56));
+    drawTextScreen(`1-5   ${style.name}`, vec2(panelX, panelY + line), 14, rgb(0.88, 0.88, 0.86));
+
+    drawTextScreen(`Q / A   COUNT         ${orbitalState.count}`, vec2(panelX, panelY + line * 3), 13, rgb(0.82, 0.82, 0.8));
+    drawTextScreen(`W / S   SIZE          ${format(orbitalState.size)}`, vec2(panelX, panelY + line * 4), 13, rgb(0.82, 0.82, 0.8));
+    drawTextScreen(`E / D   SPEED         ${format(orbitalState.speed)}`, vec2(panelX, panelY + line * 5), 13, rgb(0.82, 0.82, 0.8));
+    drawTextScreen(`R / F   ORIENTATION   ${Math.round(orbitalState.orientationDeg)}°`, vec2(panelX, panelY + line * 6), 13, rgb(0.82, 0.82, 0.8));
+    drawTextScreen(`T / G   RADIUS        ${format(orbitalState.radius)}`, vec2(panelX, panelY + line * 7), 13, rgb(0.82, 0.82, 0.8));
+    drawTextScreen(`Y / H   FLATTEN       ${format(orbitalState.flatten)}`, vec2(panelX, panelY + line * 8), 13, rgb(0.82, 0.82, 0.8));
+    drawTextScreen(`U / J   WOBBLE        ${format(orbitalState.wobble)}`, vec2(panelX, panelY + line * 9), 13, rgb(0.82, 0.82, 0.8));
+
+    drawTextScreen('KEY IDEAS', vec2(panelX, mainCanvasSize.y - 122), 14, rgb(0.9, 0.82, 0.56));
+    drawTextScreen('• quantity, size, speed, orientation', vec2(panelX, mainCanvasSize.y - 104), 13, rgb(0.74, 0.74, 0.72));
+    drawTextScreen('• radius / distance from the core', vec2(panelX, mainCanvasSize.y - 88), 13, rgb(0.74, 0.74, 0.72));
+    drawTextScreen('• flatten / ellipse amount', vec2(panelX, mainCanvasSize.y - 72), 13, rgb(0.74, 0.74, 0.72));
+    drawTextScreen('• front/back layering around the body', vec2(panelX, mainCanvasSize.y - 56), 13, rgb(0.74, 0.74, 0.72));
+    drawTextScreen('• wobble / living motion', vec2(panelX, mainCanvasSize.y - 40), 13, rgb(0.74, 0.74, 0.72));
+
+    drawTextScreen('Orbitals should feel like companions, memories, relics, seeds, or tiny satellites — not just particles.', vec2(mainCanvasSize.x / 2, mainCanvasSize.y - 26), 13, rgb(0.58, 0.58, 0.56));
 }
 
 function drawBackground() {
@@ -161,7 +258,7 @@ function drawAnchorBeam(anchor, body, scale) {
 }
 
 function drawOrbitGuide(center, scale) {
-    if (!orbitals.count) return;
+    if (!orbitalState.count) return;
 
     const segments = 48;
     for (let i = 0; i < segments; i++) {
@@ -173,22 +270,22 @@ function drawOrbitGuide(center, scale) {
         const mid = getOrbitVector(midPhase, scale);
         const alpha = mid.planeY < 0 ? 0.08 : 0.16;
         const width = mid.planeY < 0 ? 0.012 : 0.02;
-        drawLine(center.add(pointA.offset), center.add(pointB.offset), width, color(orbitStyles[orbitals.styleIndex].glow, alpha));
+        drawLine(center.add(pointA.offset), center.add(pointB.offset), width, color(orbitStyles[orbitalState.styleIndex].glow, alpha));
     }
 }
 
 function getOrbitals(center, scale) {
     const orbitals = [];
-    const count = orbitals.count;
+    const count = orbitalState.count;
     if (!count) return orbitals;
 
     for (let i = 0; i < count; i++) {
-        const phase = sceneTime * orbitals.speed + (Math.PI * 2 * i) / count;
+        const phase = sceneTime * orbitalState.speed + (Math.PI * 2 * i) / count;
         const orbitPoint = getOrbitVector(phase, scale);
         orbitals.push({
             ...orbitPoint,
             center: center.add(orbitPoint.offset),
-            size: orbitals.size * scale,
+            size: orbitalState.size * scale,
             phase,
         });
     }
@@ -203,7 +300,7 @@ function drawOrbitals(orbitals) {
 }
 
 function drawOrbital(orbital) {
-    const style = orbitStyles[orbitals.styleIndex];
+    const style = orbitStyles[orbitalState.styleIndex];
     const p = orbital.center;
     const size = orbital.size;
 
@@ -256,15 +353,15 @@ function drawOrbital(orbital) {
 }
 
 function getOrbitVector(phase, scale) {
-    const radiusX = orbitals.radius * scale;
-    const radiusY = orbitals.radius * scale * orbitals.flatten;
-    const orientation = (orbitals.orientationDeg * Math.PI) / 180;
+    const radiusX = orbitalState.radius * scale;
+    const radiusY = orbitalState.radius * scale * orbitalState.flatten;
+    const orientation = (orbitalState.orientationDeg * Math.PI) / 180;
 
     let x = Math.cos(phase) * radiusX;
     let y = Math.sin(phase) * radiusY;
 
-    const wobbleX = Math.cos(sceneTime * 1.55 + phase * 1.7) * orbitals.wobble * scale;
-    const wobbleY = Math.sin(sceneTime * 1.15 + phase * 1.3) * orbitals.wobble * scale * 0.65;
+    const wobbleX = Math.cos(sceneTime * 1.55 + phase * 1.7) * orbitalState.wobble * scale;
+    const wobbleY = Math.sin(sceneTime * 1.15 + phase * 1.3) * orbitalState.wobble * scale * 0.65;
     x += wobbleX;
     y += wobbleY;
 
@@ -394,8 +491,13 @@ function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
 
+function wrapDeg(value) {
+    const result = value % 360;
+    return result < 0 ? result + 360 : result;
+}
 
-
-mount(App, { target: document.querySelector('#ui-root') });
+function format(value) {
+    return value.toFixed(2);
+}
 
 engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost);
