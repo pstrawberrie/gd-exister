@@ -2,6 +2,20 @@ import { ParticleEmitter, drawCircle, rgb, vec2 } from 'littlejsengine';
 
 const HEAVEN_GROUND_Y = -5.25;
 
+export function getBloodtideWaveY(x, time) {
+    return 0.35
+        + Math.sin(x * 0.9 + time * 1.9) * 0.28
+        + Math.sin(x * 1.85 - time * 2.8) * 0.18
+        + Math.sin(x * 3.6 + time * 4.6) * 0.08
+        + Math.sin(x * 6.8 - time * 7.2) * 0.035;
+}
+
+let particleSceneTime = 0;
+
+export function setParticleSceneTime(time) {
+    particleSceneTime = time;
+}
+
 export const particlePrototypes = [
     {
         id: 'heaven',
@@ -78,37 +92,37 @@ function createBloodtide() {
     const emitters = [];
 
     // Broad soft fall: white dust dropping quickly in mostly straight lines.
-    emitters.push(createRoundEmitter(new ParticleEmitter(
-        vec2(0, 9.2), Math.PI,
-        18, 0, 10, 0,
+    emitters.push(createUpwardBloodtideEmitter(new ParticleEmitter(
+        vec2(0, -5.8), 0,
+        18, 0, 22, 0,
         undefined,
         rgb(0.98, 0.99, 1, 0.12), rgb(0.92, 0.94, 1, 0.03),
         rgb(0.98, 0.99, 1, 0), rgb(0.92, 0.94, 1, 0),
-        4.2, 0.065, 0.03, 0.02, 0,
+        4.2, 0.024, 0.012, 0.02, 0,
         0.998, 1, 0, 0,
         0.04, 2.4, false, false,
     )));
 
     // Sharper bright motes near the center of the scene.
-    emitters.push(createRoundEmitter(new ParticleEmitter(
-        vec2(0, 8.4), Math.PI,
-        12, 0, 18, 0,
+    emitters.push(createUpwardBloodtideEmitter(new ParticleEmitter(
+        vec2(0, -4.6), 0,
+        12, 0, 38, 0,
         undefined,
         rgb(1, 1, 1, 0.22), rgb(0.95, 0.97, 1, 0.06),
         rgb(1, 1, 1, 0), rgb(0.95, 0.97, 1, 0),
-        2.9, 0.026, 0.01, 0.014, 0,
+        2.9, 0.016, 0.008, 0.014, 0,
         0.999, 1, 0, 0,
         0.02, 3.1, false, true,
     )));
 
     // Slightly larger defocused particles to keep depth and panic variation.
-    emitters.push(createRoundEmitter(new ParticleEmitter(
-        vec2(0, 8.8), Math.PI,
-        16, 0, 7, 0,
+    emitters.push(createUpwardBloodtideEmitter(new ParticleEmitter(
+        vec2(0, -3.8), 0,
+        16, 0, 16, 0,
         undefined,
         rgb(0.96, 0.97, 1, 0.07), rgb(0.92, 0.94, 1, 0.02),
         rgb(0.96, 0.97, 1, 0), rgb(0.92, 0.94, 1, 0),
-        4.6, 0.14, 0.07, 0.012, 0,
+        4.6, 0.03, 0.015, 0.012, 0,
         0.9985, 1, 0, 0,
         0.05, 2.7, false, true,
     )));
@@ -120,11 +134,11 @@ function createBloodtide() {
     for (const x of bloodRainColumns) {
         emitters.push(createBloodRainEmitter(new ParticleEmitter(
             vec2(x, 8.25), 0,
-            4.5, 0, 45, 0,
+            4.5, 0, 5.625, 0,
             undefined,
-            rgb(1, 1, 1, 0.9), rgb(1, 1, 1, 0.65),
-            rgb(1, 1, 1, 0), rgb(1, 1, 1, 0),
-            0.62, 0.0276, 0.0096, 0, 0,
+            rgb(1, 0.08, 0.1, 0.92), rgb(0.78, 0.015, 0.04, 0.7),
+            rgb(1, 0.08, 0.1, 0), rgb(0.78, 0.015, 0.04, 0),
+            2.7, 0.06624, 0.02304, 0, 0,
             1, 1, 0, 0,
             0.08, 0.06, false, true,
         )));
@@ -155,30 +169,79 @@ function createRoundEmitter(emitter) {
 }
 
 
+
+function createUpwardBloodtideEmitter(emitter) {
+    emitter.particleCreateCallback = (particle) => {
+        // Preserve the existing slow/random magical drift, but ensure the
+        // particle's long-term destination is upward rather than downward.
+        const horizontalDrift = (Math.random() - 0.5) * 0.018;
+        const upwardSpeed = 0.008 + Math.random() * 0.018;
+        particle.velocity = vec2(horizontalDrift, upwardSpeed);
+
+        // Only about half of the above-water dust should turn red. The rest
+        // should stay in a pale gray/white family once they leave the water.
+        particle.existerTurnsRedAboveWater = Math.random() < 0.5;
+
+        particle.render = function renderUpwardBloodtideParticle() {
+            const diameter = this.size.x;
+            const waveY = getBloodtideWaveY(this.pos.x, particleSceneTime);
+            const aboveWater = this.pos.y > waveY;
+
+            // Below the surface, keep the original pale magical dust. Once the
+            // mote rises out of the water, only half shift to blood-red; the
+            // rest become softly gray-white so the field stays varied.
+            const aboveWaterAlpha = Math.min(0.46, Math.max(0.22, this.color.a * 1.8));
+            const paleAboveWaterAlpha = Math.min(0.4, Math.max(0.18, this.color.a * 1.55));
+            const aboveWaterColor = particle.existerTurnsRedAboveWater
+                ? rgb(1, 0.28, 0.24, aboveWaterAlpha)
+                : rgb(0.98, 0.985, 1, paleAboveWaterAlpha);
+            const belowWaterColor = rgb(
+                Math.min(1, this.color.r * 1.08),
+                Math.min(1, this.color.g * 1.08),
+                Math.min(1, this.color.b * 1.08),
+                Math.min(0.36, Math.max(0.12, this.color.a * 1.35)),
+            );
+            const color = aboveWater ? aboveWaterColor : belowWaterColor;
+
+            drawCircle(this.pos, diameter, color);
+        };
+    };
+
+    return emitter;
+}
+
 function createBloodRainEmitter(emitter) {
     emitter.particleCreateCallback = (particle) => {
         // Explicitly force a very fast downward trajectory with only a hair of
         // horizontal nervousness. LittleJS still owns lifetime and cleanup.
         particle.velocity = vec2(
-            (Math.random() - 0.5) * 0.016,
-            -(0.232 + Math.random() * 0.08),
+            (Math.random() - 0.5) * 0.008,
+            -(0.116 + Math.random() * 0.04),
         );
 
         particle.render = function renderBloodRainParticle() {
             const diameter = this.size.x;
-            const outerDiameter = diameter * 1.35;
             const verticalOffset = diameter * 0.34;
+            const waveY = getBloodtideWaveY(this.pos.x, particleSceneTime);
+            const submerged = this.pos.y <= waveY;
 
-            // Build a narrow vertical capsule from overlapping circles. The
-            // red rim reads around the whole drop, while the white core stays
-            // tall and tight: visually closer to `()` than `(  )`.
-            drawCircle(this.pos.add(vec2(0, verticalOffset)), outerDiameter, rgb(1, 0.18, 0.2, this.color.a * 0.38));
-            drawCircle(this.pos, outerDiameter, rgb(1, 0.18, 0.2, this.color.a * 0.42));
-            drawCircle(this.pos.add(vec2(0, -verticalOffset)), outerDiameter, rgb(1, 0.18, 0.2, this.color.a * 0.38));
+            // Water drag: once submerged, reduce the fall speed smoothly and
+            // keep it capped so the drop feels resisted by the blood ocean.
+            if (submerged && !this.existerSubmerged) {
+                this.velocity.y *= 0.38;
+                this.velocity.x *= 0.5;
+                this.existerSubmerged = true;
+            }
 
-            drawCircle(this.pos.add(vec2(0, verticalOffset)), diameter, this.color);
-            drawCircle(this.pos, diameter, this.color);
-            drawCircle(this.pos.add(vec2(0, -verticalOffset)), diameter, this.color);
+            // Keep the rain simple now: a red oblong body above the surface,
+            // fading to a faint white ghost once submerged.
+            const bodyColor = submerged
+                ? rgb(1, 1, 1, this.color.a * 0.16)
+                : rgb(0.92, 0.025, 0.055, this.color.a * 0.52);
+
+            drawCircle(this.pos.add(vec2(0, verticalOffset)), diameter, bodyColor);
+            drawCircle(this.pos, diameter, bodyColor);
+            drawCircle(this.pos.add(vec2(0, -verticalOffset)), diameter, bodyColor);
         };
     };
 
