@@ -7,6 +7,7 @@ import {
     setCameraPos,
     setCameraScale,
     setCanvasClearColor,
+    setInputPreventDefault,
     vec2,
 } from 'littlejsengine';
 import { mount } from 'svelte';
@@ -20,6 +21,11 @@ const HEIGHT_FACTOR = 1.18;
 const SHADOW_SHIFT = vec2(0.18, -0.22);
 
 let sceneTime = 0;
+
+// Exister uses native HTML/Svelte controls over the game canvas. LittleJS
+// prevents browser-default input handling by default, which interferes with
+// sliders, selects, text fields, scrolling, and other native UI behavior.
+setInputPreventDefault(false);
 
 let orbitals = {};
 orbitalState.subscribe((value) => orbitals = value);
@@ -178,14 +184,14 @@ function drawOrbitGuide(center, scale) {
 }
 
 function getOrbitals(center, scale) {
-    const orbitals = [];
+    const renderedOrbitals = [];
     const count = orbitals.count;
-    if (!count) return orbitals;
+    if (!count) return renderedOrbitals;
 
     for (let i = 0; i < count; i++) {
         const phase = sceneTime * orbitals.speed + (Math.PI * 2 * i) / count;
         const orbitPoint = getOrbitVector(phase, scale);
-        orbitals.push({
+        renderedOrbitals.push({
             ...orbitPoint,
             center: center.add(orbitPoint.offset),
             size: orbitals.size * scale,
@@ -193,8 +199,8 @@ function getOrbitals(center, scale) {
         });
     }
 
-    orbitals.sort((a, b) => a.planeY - b.planeY);
-    return orbitals;
+    renderedOrbitals.sort((a, b) => a.planeY - b.planeY);
+    return renderedOrbitals;
 }
 
 function drawOrbitals(orbitals) {
